@@ -1,0 +1,83 @@
+{% extends "polls/base.html" %}
+
+{% block title %}Acheter des heures{% endblock %}
+{% block page_title %}Heures de formation{% endblock %}
+{% block nav_heures %}active{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{% url 'heures-list' %}" class="btn btn-secondary btn-sm">← Retour</a>
+{% endblock %}
+
+{% block content %}
+
+<div style="max-width:560px;">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1>Acheter des heures</h1>
+            <p>Ajoutez des heures de formation à votre solde.</p>
+        </div>
+    </div>
+
+    <!-- Solde actuel -->
+    {% if request.user.userprofile.heuresformation %}
+    <div class="card" style="border-left:4px solid var(--orange);margin-bottom:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+                <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);">
+                    Votre solde actuel
+                </div>
+                <div style="font-size:28px;font-weight:800;color:var(--navy);margin-top:4px;">
+                    {{ request.user.userprofile.heuresformation.solde }}h
+                </div>
+            </div>
+            <div style="width:48px;height:48px;border-radius:12px;background:#FFF0E6;display:flex;align-items:center;justify-content:center;">
+                <svg width="22" height="22" fill="none" stroke="var(--orange)" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Formulaire -->
+    <div class="card">
+        <div style="font-size:15px;font-weight:600;margin-bottom:20px;">Ajouter des heures</div>
+
+        <form method="post" class="django-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+
+            {{ form.as_p }}
+
+            <!-- Aperçu rapide -->
+            <div style="background:var(--bg);border-radius:10px;padding:16px;margin:16px 0;display:flex;align-items:center;gap:12px;">
+                <svg width="18" height="18" fill="none" stroke="var(--orange)" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span style="font-size:13px;color:var(--muted);">
+                    Vous pouvez acheter entre <strong style="color:var(--text);">1</strong> et <strong style="color:var(--text);">10 heures</strong> par transaction.
+                </span>
+            </div>
+
+            <div style="display:flex;gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+                <button type="submit" class="btn btn-primary">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    Valider l'achat
+                </button>
+                <a href="{% url 'heures-list' %}" class="btn btn-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}

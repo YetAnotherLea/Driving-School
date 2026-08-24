@@ -1,0 +1,43 @@
+{% extends "polls/base.html" %}
+
+{% block title %}Modifier un solde{% endblock %}
+{% block page_title %}Heures de formation{% endblock %}
+{% block nav_heures %}active{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{% url 'heures-list' %}" class="btn btn-secondary btn-sm">← Retour</a>
+{% endblock %}
+
+{% block content %}
+
+<div style="max-width:560px;">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1>Corriger le solde</h1>
+            <p>Ajustez directement le solde de {{ object.apprenant.user.get_full_name|default:object.apprenant.user.username }}.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <form method="post" class="django-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+
+            {{ form.as_p }}
+
+            <div style="display:flex;gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                <a href="{% url 'heures-list' %}" class="btn btn-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "polls/base.html" %}
+
+{% block title %}Supprimer un compte{% endblock %}
+{% block page_title %}Comptes{% endblock %}
+{% block nav_users %}active{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{% url 'compte-list' %}" class="btn btn-secondary btn-sm">← Retour</a>
+{% endblock %}
+
+{% block content %}
+
+<div style="max-width:560px;">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1>Supprimer le compte</h1>
+            <p>Cette action est définitive.</p>
+        </div>
+    </div>
+
+    {% if erreur_suppression %}
+    <div class="alert alert-danger" style="margin-bottom:20px;">
+        {{ erreur_suppression }}
+    </div>
+    {% endif %}
+
+    <div class="card" style="border-left:4px solid var(--danger);">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+            <div class="avatar">
+                {{ object.first_name|first|upper }}{{ object.last_name|first|upper }}
+            </div>
+            <div>
+                <div style="font-size:16px;font-weight:700;color:var(--navy);">
+                    {{ object.get_full_name|default:object.username }}
+                </div>
+                <div style="font-size:13px;color:var(--muted);">
+                    {{ object.username }}{% if profil_cible %} — {{ profil_cible.get_role_display }}{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <p style="font-size:14px;color:var(--muted);margin-bottom:8px;">
+            Le compte et son profil seront supprimés.
+            {% if nb_rdv %}
+                Ce compte est rattaché à <strong style="color:var(--danger);">{{ nb_rdv }} rendez-vous</strong> :
+                la suppression échouera tant qu'ils existent.
+            {% endif %}
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div style="display:flex;gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+                <button type="submit" class="btn btn-danger">Supprimer définitivement</button>
+                <a href="{% url 'compte-list' %}" class="btn btn-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}

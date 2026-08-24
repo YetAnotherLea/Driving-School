@@ -1,0 +1,143 @@
+{% extends "polls/base.html" %}
+
+{% block title %}Rendez-vous du {{ object.date|date:"d/m/Y" }}{% endblock %}
+{% block page_title %}Détail du rendez-vous{% endblock %}
+{% block nav_rdv %}active{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{% url 'rdv-list' %}" class="btn btn-secondary btn-sm">← Retour au planning</a>
+    {% if profil.peut_gerer_rdv %}
+    <a href="{% url 'rdv-update' object.pk %}" class="btn btn-secondary btn-sm">Modifier</a>
+    <a href="{% url 'rdv-delete' object.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start;">
+
+    <!-- Carte principale -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <div class="card">
+            <!-- En-tête avec statut -->
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+                <div>
+                    <h1 style="font-size:20px;font-weight:700;color:var(--text);">
+                        Rendez-vous — {{ object.date|date:"d F Y à H:i" }}
+                    </h1>
+                    <p style="font-size:13px;color:var(--muted);margin-top:4px;">Référence #{{ object.pk }}</p>
+                </div>
+                {% if object.status == "OK" %}
+                    <span class="badge badge-green" style="font-size:13px;padding:6px 14px;">Confirmé</span>
+                {% elif object.status == "WAIT" %}
+                    <span class="badge badge-gold" style="font-size:13px;padding:6px 14px;">En attente</span>
+                {% elif object.status == "DEL" %}
+                    <span class="badge badge-red" style="font-size:13px;padding:6px 14px;">Annulé</span>
+                {% endif %}
+            </div>
+
+            <!-- Infos -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+                <!-- Apprenant -->
+                <div style="background:var(--bg);border-radius:10px;padding:16px;">
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:12px;">
+                        Apprenant
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div class="avatar" style="width:44px;height:44px;">
+                            {{ object.apprenant.user.first_name|first|upper }}{{ object.apprenant.user.last_name|first|upper }}
+                        </div>
+                        <div>
+                            <div style="font-weight:600;font-size:14px;">
+                                {{ object.apprenant.user.get_full_name|default:object.apprenant }}
+                            </div>
+                            <span class="badge badge-blue" style="margin-top:4px;">Apprenant</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'compte-detail' object.apprenant.pk %}" class="link-orange" style="font-size:12px;display:block;margin-top:12px;">
+                        Voir le profil →
+                    </a>
+                </div>
+
+                <!-- Moniteur -->
+                <div style="background:var(--bg);border-radius:10px;padding:16px;">
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:12px;">
+                        Moniteur
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div class="avatar" style="width:44px;height:44px;background:var(--navy);color:#fff;">
+                            {{ object.moniteur.user.first_name|first|upper }}{{ object.moniteur.user.last_name|first|upper }}
+                        </div>
+                        <div>
+                            <div style="font-weight:600;font-size:14px;">
+                                {{ object.moniteur.user.get_full_name|default:object.moniteur }}
+                            </div>
+                            <span class="badge badge-orange" style="margin-top:4px;">Moniteur</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'compte-detail' object.moniteur.pk %}" class="link-orange" style="font-size:12px;display:block;margin-top:12px;">
+                        Voir le profil →
+                    </a>
+                </div>
+
+            </div>
+
+            <!-- Leçon associée -->
+            {% if object.lecon %}
+            <div style="margin-top:20px;background:#FFF0E6;border-radius:10px;padding:16px;border:1px solid rgba(255,107,0,0.2);">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--orange);margin-bottom:8px;">
+                    Leçon associée
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <svg width="16" height="16" fill="none" stroke="var(--orange)" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span style="font-size:15px;font-weight:700;color:var(--navy);">{{ object.lecon.duree }} heure{{ object.lecon.duree|pluralize }}</span>
+                    <span style="font-size:13px;color:var(--muted);">de formation</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- Sidebar -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Résumé date -->
+        <div class="card" style="background:var(--navy);border:none;text-align:center;padding:28px 20px;">
+            <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">
+                Date du rendez-vous
+            </div>
+            <div style="font-size:42px;font-weight:800;color:#fff;line-height:1;">
+                {{ object.date|date:"d" }}
+            </div>
+            <div style="font-size:16px;font-weight:600;color:rgba(255,255,255,0.7);margin-top:4px;">
+                {{ object.date|date:"F Y" }}
+            </div>
+            <div style="margin-top:12px;background:var(--orange);border-radius:8px;padding:8px 16px;display:inline-block;">
+                <span style="font-size:18px;font-weight:700;color:#fff;">{{ object.date|date:"H:i" }}</span>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="card">
+            <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:14px;">
+                Actions
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                <a href="{% url 'rdv-list' %}" class="btn btn-secondary btn-sm" style="justify-content:center;">
+                    ← Retour au planning
+                </a>
+                <a href="{% url 'rdv-create' %}" class="btn btn-primary btn-sm" style="justify-content:center;">
+                    Nouveau rendez-vous
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

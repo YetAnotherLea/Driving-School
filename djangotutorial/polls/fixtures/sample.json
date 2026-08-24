@@ -1,0 +1,164 @@
+[
+  {
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+      "password": "pbkdf2_sha256$1200000$OYhlB2hR45QDCDqyDQCKka$tI+HqxPlvRG+COFh9IKDyq9MMFtQpp4XiwlI/OQae7E=",
+      "last_login": null,
+      "is_superuser": false,
+      "username": "John_Moniteur",
+      "last_name": "Doe",
+      "email": "johndoe@moniteur.fr",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2026-01-01T00:00:00Z",
+      "first_name": "John"
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 2,
+    "fields": {
+      "password": "pbkdf2_sha256$1200000$J5UGTMYIWl9BJjwjBCFMI4$oeYj9mR+v93T3oZAWKWJVfrMHY3lLevX0LNiqv+BVxI=",
+      "last_login": null,
+      "is_superuser": false,
+      "username": "Jane_Apprenant",
+      "last_name": "Doe",
+      "email": "janedoe@apprenant.fr",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2026-01-01T00:00:00Z",
+      "first_name": "Jane"
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 3,
+    "fields": {
+      "password": "pbkdf2_sha256$1200000$J5UGTMYIWl9BJjwjBCFMI4$oeYj9mR+v93T3oZAWKWJVfrMHY3lLevX0LNiqv+BVxI=",
+      "last_login": null,
+      "is_superuser": false,
+      "username": "Alice_Apprenant",
+      "last_name": "Martin",
+      "email": "alice@apprenant.fr",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2026-01-01T00:00:00Z",
+      "first_name": "Alice"
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 4,
+    "fields": {
+      "password": "pbkdf2_sha256$1200000$OYhlB2hR45QDCDqyDQCKka$tI+HqxPlvRG+COFh9IKDyq9MMFtQpp4XiwlI/OQae7E=",
+      "last_login": null,
+      "is_superuser": false,
+      "username": "Paul_Moniteur",
+      "last_name": "Dupont",
+      "email": "paul@moniteur.fr",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2026-01-01T00:00:00Z",
+      "first_name": "Paul"
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 5,
+    "fields": {
+      "password": "pbkdf2_sha256$1200000$hVHJ17nKgCUE2b50N6iP7r$iSbs2TnrHZNi9TRIqDXUH2BEEHfLL6Zx8YJY6S1xgGY=",
+      "last_login": null,
+      "is_superuser": false,
+      "username": "Bob_Secretaire",
+      "last_name": "Smith",
+      "email": "bobsmith@secretaire.fr",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2026-01-01T00:00:00Z",
+      "first_name": "Bob"
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 6,
+    "fields": {
+      "password": "pbkdf2_sha256$1200000$6so26EtMVPQOK1ixsTbiKF$CzrshUZYDr6839sRoiZCmwnQSX7KoJrQ/bxl2Zv7FD0=",
+      "last_login": null,
+      "is_superuser": true,
+      "username": "admin",
+      "last_name": "admin",
+      "email": "admin@email.fr",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2026-01-01T00:00:00Z",
+      "first_name": "admin"
+    }
+  },
+  {
+    "model": "polls.userprofile",
+    "pk": 1,
+    "fields": {
+      "user": 1,
+      "role": "moniteur"
+    }
+  },
+  {
+    "model": "polls.userprofile",
+    "pk": 2,
+    "fields": {
+      "user": 2,
+      "role": "apprenant"
+    }
+  },
+  {
+    "model": "polls.userprofile",
+    "pk": 3,
+    "fields": {
+      "user": 3,
+      "role": "apprenant"
+    }
+  },
+  {
+    "model": "polls.userprofile",
+    "pk": 4,
+    "fields": {
+      "user": 4,
+      "role": "moniteur"
+    }
+  },
+  {
+    "model": "polls.userprofile",
+    "pk": 5,
+    "fields": {
+      "user": 5,
+      "role": "secretaire"
+    }
+  },
+  {
+    "model": "polls.rendezvous",
+    "pk": 1,
+    "fields": {
+      "date": "2026-06-01T10:00:00Z",
+      "apprenant": 2,
+      "moniteur": 1,
+      "status": "OK"
+    }
+  },
+  {
+    "model": "polls.heuresformation",
+    "pk": 1,
+    "fields": {
+      "apprenant": 2,
+      "solde": 2
+    }
+  },
+  {
+    "model": "polls.heuresformation",
+    "pk": 2,
+    "fields": {
+      "apprenant": 3,
+      "solde": 5
+    }
+  }
+]

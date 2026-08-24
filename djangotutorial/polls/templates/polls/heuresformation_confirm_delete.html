@@ -1,0 +1,40 @@
+{% extends "polls/base.html" %}
+
+{% block title %}Supprimer un solde{% endblock %}
+{% block page_title %}Heures de formation{% endblock %}
+{% block nav_heures %}active{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{% url 'heures-list' %}" class="btn btn-secondary btn-sm">← Retour</a>
+{% endblock %}
+
+{% block content %}
+
+<div style="max-width:560px;">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1>Supprimer le solde</h1>
+            <p>Cette action est définitive.</p>
+        </div>
+    </div>
+
+    <div class="card" style="border-left:4px solid var(--danger);">
+        <p style="font-size:14px;color:var(--muted);">
+            Le solde de
+            <strong style="color:var(--navy);">{{ object.apprenant.user.get_full_name|default:object.apprenant.user.username }}</strong>
+            ({{ object.solde }}h) sera supprimé.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div style="display:flex;gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+                <button type="submit" class="btn btn-danger">Supprimer définitivement</button>
+                <a href="{% url 'heures-list' %}" class="btn btn-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}

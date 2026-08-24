@@ -1,0 +1,51 @@
+{% extends "polls/base.html" %}
+
+{% block title %}Supprimer un rendez-vous{% endblock %}
+{% block page_title %}Planning{% endblock %}
+{% block nav_rdv %}active{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{% url 'rdv-list' %}" class="btn btn-secondary btn-sm">← Retour</a>
+{% endblock %}
+
+{% block content %}
+
+<div style="max-width:560px;">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1>Supprimer le rendez-vous</h1>
+            <p>Cette action est définitive.</p>
+        </div>
+    </div>
+
+    <div class="card" style="border-left:4px solid var(--danger);">
+        <div style="margin-bottom:16px;">
+            <div style="font-size:20px;font-weight:800;color:var(--navy);">
+                {{ object.date|date:"d/m/Y" }} à {{ object.date|date:"H:i" }}
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px;">
+            <div>
+                <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);">Apprenant</div>
+                <p>{{ object.apprenant.user.get_full_name|default:object.apprenant.user.username }}</p>
+            </div>
+            <div>
+                <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);">Moniteur</div>
+                <p>{{ object.moniteur.user.get_full_name|default:object.moniteur.user.username }}</p>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div style="display:flex;gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+                <button type="submit" class="btn btn-danger">Supprimer définitivement</button>
+                <a href="{% url 'rdv-list' %}" class="btn btn-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}

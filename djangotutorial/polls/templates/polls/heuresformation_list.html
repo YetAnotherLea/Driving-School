@@ -1,0 +1,119 @@
+{% extends "polls/base.html" %}
+
+{% block title %}Heures de formation{% endblock %}
+{% block page_title %}Heures de formation{% endblock %}
+{% block nav_heures %}active{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{% url 'heures-create' %}" class="btn btn-primary">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Acheter des heures
+    </a>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Heures de formation</h1>
+        <p>Soldes d'heures disponibles par apprenant.</p>
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <div class="table-header">
+        <span style="font-size:15px;font-weight:600;">
+            {{ object_list|length }} forfait{{ object_list|length|pluralize }}
+        </span>
+        <a href="{% url 'heures-create' %}" class="btn btn-primary btn-sm">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Acheter
+        </a>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Apprenant</th>
+                <th>Solde d'heures</th>
+                <th>Progression</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in object_list %}
+            <tr>
+                <td>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div class="avatar">
+                            {{ item.apprenant.user.first_name|first|upper }}{{ item.apprenant.user.last_name|first|upper }}
+                        </div>
+                        <div>
+                            <div style="font-weight:600;font-size:14px;">
+                                {{ item.apprenant.user.get_full_name|default:item.apprenant }}
+                            </div>
+                            <div style="font-size:12px;color:var(--muted);">{{ item.apprenant.user.email }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div style="display:flex;align-items:baseline;gap:4px;">
+                        <span style="font-size:22px;font-weight:800;color:var(--navy);">{{ item.solde }}</span>
+                        <span style="font-size:13px;color:var(--muted);">heure{{ item.solde|pluralize }}</span>
+                    </div>
+                </td>
+                <td style="min-width:160px;">
+                    {% if item.solde > 0 %}
+                        {% if item.solde >= 15 %}
+                            <span class="badge badge-green" style="margin-bottom:6px;">Bon niveau</span>
+                        {% elif item.solde >= 5 %}
+                            <span class="badge badge-gold" style="margin-bottom:6px;">Attention</span>
+                        {% else %}
+                            <span class="badge badge-red" style="margin-bottom:6px;">Solde faible</span>
+                        {% endif %}
+                        <div class="progress-bar-track" style="margin-top:6px;">
+                            <div class="progress-bar-fill"
+                                 style="width:{% if item.solde >= 20 %}100{% else %}{{ item.solde }}{% endif %}%;
+                                        {% if item.solde < 5 %}background:var(--danger);{% elif item.solde < 15 %}background:var(--gold);{% endif %}">
+                            </div>
+                        </div>
+                    {% else %}
+                        <span class="badge badge-red">Aucune heure</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <a href="{% url 'heures-detail' item.pk %}" class="link-orange" style="font-size:13px;">Détails →</a>
+                        {% if profil.peut_gerer_heures %}
+                        <a href="{% url 'heures-update' item.pk %}" class="btn btn-secondary btn-sm">Modifier</a>
+                        <a href="{% url 'heures-delete' item.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align:center;padding:48px;color:var(--muted);">
+                    <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 12px;display:block;opacity:0.4;">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <p style="margin-bottom:12px;">Aucun forfait d'heures enregistré.</p>
+                    <a href="{% url 'heures-create' %}" class="btn btn-primary btn-sm">Acheter des heures</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if object_list %}
+    <div class="table-footer">
+        <span>{{ object_list|length }} forfait{{ object_list|length|pluralize }} au total</span>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

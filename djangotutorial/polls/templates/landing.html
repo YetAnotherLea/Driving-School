@@ -1,0 +1,249 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenue — Driving School</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'polls/driving-school.svg' %}">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #F4F7FA;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .landing-wrapper {
+            display: flex;
+            max-width: 1100px;
+            width: 100%;
+            margin: 40px;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .landing-left {
+            flex: 1;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 22px;
+            font-weight: 800;
+            color: #1A2B48;
+            margin-bottom: 48px;
+        }
+
+        .logo img {
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+        }
+
+        h1 {
+            font-size: 42px;
+            font-weight: 800;
+            color: #1A2B48;
+            line-height: 1.15;
+            margin-bottom: 20px;
+        }
+
+        h1 .accent {
+            color: #FF6B00;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #6B7A99;
+            line-height: 1.6;
+            max-width: 420px;
+            margin-bottom: 40px;
+        }
+
+        .features {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: #1A2B48;
+        }
+
+        .feature-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #FF6B00;
+            flex-shrink: 0;
+        }
+
+        .landing-right {
+            flex-shrink: 0;
+            width: 400px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(26, 43, 72, 0.10);
+            padding: 40px;
+        }
+
+        .card h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1A2B48;
+            margin-bottom: 8px;
+        }
+
+        .card p {
+            font-size: 14px;
+            color: #6B7A99;
+            margin-bottom: 28px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 13px 28px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            transition: all 0.15s;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: #FF6B00;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #E55E00;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0;
+            color: #CBD5E0;
+            font-size: 12px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #E2E8F0;
+        }
+
+        .info-block {
+            background: #F4F7FA;
+            border-radius: 10px;
+            padding: 16px;
+            font-size: 13px;
+            color: #6B7A99;
+            line-height: 1.5;
+        }
+
+        .info-block strong {
+            color: #1A2B48;
+        }
+
+        @media (max-width: 768px) {
+            .landing-wrapper {
+                flex-direction: column;
+                margin: 20px;
+                gap: 32px;
+            }
+
+            .landing-right {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="landing-wrapper">
+        <div class="landing-left">
+            <div class="logo">
+                <img src="{% static 'polls/driving-school.svg' %}" alt="Driving School logo">
+                Driving School
+            </div>
+            <h1>L'intranet de votre <span class="accent">driving school</span></h1>
+            <p class="subtitle">
+                Gérez vos apprenants, planifiez les leçons, suivez les heures de formation
+                et coordonnez toute votre équipe depuis une seule plateforme.
+            </p>
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-dot"></div>
+                    Gestion des apprenants, moniteurs et secrétaires
+                </div>
+                <div class="feature">
+                    <div class="feature-dot"></div>
+                    Système de planning et de rendez-vous
+                </div>
+                <div class="feature">
+                    <div class="feature-dot"></div>
+                    Suivi des heures de formation
+                </div>
+                <div class="feature">
+                    <div class="feature-dot"></div>
+                    Tableau de bord pour chaque rôle
+                </div>
+            </div>
+
+
+        </div>
+
+        <div class="landing-right">
+            <div class="card">
+                <h2>Accéder à l'intranet</h2>
+                <p>Connectez-vous avec votre compte pour accéder à votre espace personnel.</p>
+                <a href="/login/" class="btn btn-primary">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                        <polyline points="10 17 15 12 10 7" />
+                        <line x1="15" y1="12" x2="3" y2="12" />
+                    </svg>
+                    Se connecter
+                </a>
+                <div class="divider">Intranet réservé au personnel et apprenants</div>
+                <div class="info-block">
+                    <strong>Vous n'avez pas de compte ?</strong><br>
+                    Contactez votre secrétariat pour obtenir vos identifiants de connexion.
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,144 @@
+{% extends "polls/base.html" %}
+
+{% block title %}Heures — {{ object.apprenant.user.get_full_name|default:object.apprenant }}{% endblock %}
+{% block page_title %}Heures de formation{% endblock %}
+{% block nav_heures %}active{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{% url 'heures-list' %}" class="btn btn-secondary btn-sm">← Retour à la liste</a>
+    <a href="{% url 'heures-create' %}" class="btn btn-primary btn-sm">Acheter des heures</a>
+{% endblock %}
+
+{% block content %}
+
+<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start;">
+
+    <!-- Carte principale -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Profil apprenant -->
+        <div class="card">
+            <div style="display:flex;align-items:center;gap:20px;margin-bottom:24px;">
+                <div style="width:64px;height:64px;border-radius:16px;background:var(--bg);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:var(--navy);flex-shrink:0;">
+                    {{ object.apprenant.user.first_name|first|upper }}{{ object.apprenant.user.last_name|first|upper }}
+                </div>
+                <div>
+                    <h1 style="font-size:20px;font-weight:700;color:var(--text);">
+                        {{ object.apprenant.user.get_full_name|default:object.apprenant }}
+                    </h1>
+                    <div style="margin-top:6px;">
+                        <span class="badge badge-blue">Apprenant</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="detail-item">
+                    <span>Prénom</span>
+                    <p>{{ object.apprenant.user.first_name|default:"—" }}</p>
+                </div>
+                <div class="detail-item">
+                    <span>Nom</span>
+                    <p>{{ object.apprenant.user.last_name|default:"—" }}</p>
+                </div>
+                <div class="detail-item">
+                    <span>E-mail</span>
+                    <p>{{ object.apprenant.user.email|default:"—" }}</p>
+                </div>
+                <div class="detail-item">
+                    <span>Profil</span>
+                    <p>
+                        <a href="{% url 'compte-detail' object.apprenant.pk %}" class="link-orange">
+                            Voir le profil →
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historique / infos -->
+        <div class="card">
+            <div style="font-size:15px;font-weight:600;margin-bottom:16px;">Détail du forfait</div>
+
+            <div style="display:flex;align-items:center;gap:16px;padding:20px;background:var(--bg);border-radius:10px;">
+                <div style="width:52px;height:52px;border-radius:12px;background:var(--orange);display:flex;align-items:center;justify-content:center;">
+                    <svg width="24" height="24" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                </div>
+                <div>
+                    <div style="font-size:13px;color:var(--muted);">Solde actuel</div>
+                    <div style="font-size:32px;font-weight:800;color:var(--navy);line-height:1.1;">
+                        {{ object.solde }}<span style="font-size:16px;font-weight:500;color:var(--muted);">h</span>
+                    </div>
+                </div>
+                <div style="margin-left:auto;">
+                    {% if object.solde >= 15 %}
+                        <span class="badge badge-green" style="font-size:12px;padding:6px 12px;">Bon niveau</span>
+                    {% elif object.solde >= 5 %}
+                        <span class="badge badge-gold" style="font-size:12px;padding:6px 12px;">Attention</span>
+                    {% else %}
+                        <span class="badge badge-red" style="font-size:12px;padding:6px 12px;">Solde faible</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if object.solde > 0 %}
+            <div style="margin-top:16px;">
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
+                    <span>Progression (sur 20h max)</span>
+                    <span>{{ object.solde }}/20h</span>
+                </div>
+                <div class="progress-bar-track" style="height:10px;">
+                    <div class="progress-bar-fill"
+                         style="width:{% if object.solde >= 20 %}100{% else %}{{ object.solde }}{% endif %}%;
+                                {% if object.solde < 5 %}background:var(--danger);{% elif object.solde < 15 %}background:var(--gold);{% endif %}">
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- Sidebar -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Solde visuel -->
+        <div class="card" style="background:var(--navy);border:none;text-align:center;padding:32px 20px;">
+            <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">
+                Solde d'heures
+            </div>
+            <div style="font-size:60px;font-weight:900;color:#fff;line-height:1;">
+                {{ object.solde }}
+            </div>
+            <div style="font-size:16px;color:rgba(255,255,255,0.6);margin-top:6px;">
+                heure{{ object.solde|pluralize }} disponible{{ object.solde|pluralize }}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="card">
+            <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:14px;">
+                Actions
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                <a href="{% url 'heures-create' %}" class="btn btn-primary btn-sm" style="justify-content:center;">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Acheter des heures
+                </a>
+                <a href="{% url 'rdv-create' %}" class="btn btn-secondary btn-sm" style="justify-content:center;">
+                    Réserver un créneau
+                </a>
+                <a href="{% url 'heures-list' %}" class="btn btn-secondary btn-sm" style="justify-content:center;">
+                    ← Retour à la liste
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

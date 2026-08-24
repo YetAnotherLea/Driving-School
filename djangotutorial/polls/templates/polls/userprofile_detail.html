@@ -1,0 +1,200 @@
+{% extends "polls/base.html" %}
+
+{% block title %}{{ object.user.get_full_name|default:object.user.username }}{% endblock %}
+{% block page_title %}Profil utilisateur{% endblock %}
+{% block nav_users %}active{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{% url 'compte-list' %}" class="btn btn-secondary btn-sm">
+        ← Retour à la liste
+    </a>
+    {% if object.role in profil.roles_gerables %}
+    <a href="{% url 'compte-update' object.pk %}" class="btn btn-secondary btn-sm">Modifier</a>
+    <a href="{% url 'compte-delete' object.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start;">
+
+    <!-- Infos principales -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Carte identité -->
+        <div class="card">
+            <div style="display:flex;align-items:center;gap:20px;margin-bottom:24px;">
+                <div style="width:64px;height:64px;border-radius:16px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;flex-shrink:0;">
+                    {{ object.user.first_name|first|upper }}{{ object.user.last_name|first|upper }}
+                </div>
+                <div>
+                    <h1 style="font-size:22px;font-weight:700;color:var(--text);">
+                        {{ object.user.get_full_name|default:object.user.username }}
+                    </h1>
+                    <div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                        {% if object.role == "apprenant" %}
+                            <span class="badge badge-blue">{{ object.get_role_display }}</span>
+                        {% elif object.role == "moniteur" %}
+                            <span class="badge badge-orange">{{ object.get_role_display }}</span>
+                        {% elif object.role == "secretaire" %}
+                            <span class="badge badge-gold">{{ object.get_role_display }}</span>
+                        {% elif object.role == "admin" %}
+                            <span class="badge badge-navy">{{ object.get_role_display }}</span>
+                        {% endif %}
+                        {% if object.user.is_active %}
+                            <span class="badge badge-green">Compte actif</span>
+                        {% else %}
+                            <span class="badge badge-red">Compte inactif</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span>Prénom</span>
+                    <p>{{ object.user.first_name|default:"—" }}</p>
+                </div>
+                <div class="detail-item">
+                    <span>Nom</span>
+                    <p>{{ object.user.last_name|default:"—" }}</p>
+                </div>
+                <div class="detail-item">
+                    <span>Pseudo</span>
+                    <p>{{ object.user.username }}</p>
+                </div>
+                <div class="detail-item">
+                    <span>E-mail</span>
+                    <p>{{ object.user.email|default:"—" }}</p>
+                </div>
+                <div class="detail-item">
+                    <span>Rôle</span>
+                    <p>{{ object.get_role_display }}</p>
+                </div>
+                <div class="detail-item">
+                    <span>Membre depuis</span>
+                    <p>{{ object.user.date_joined|date:"d/m/Y"|default:"—" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rendez-vous de l'apprenant -->
+        {% if object.rdv_apprenant.all %}
+        <div class="table-wrapper">
+            <div class="table-header">
+                <span style="font-size:15px;font-weight:600;">Rendez-vous en tant qu'apprenant</span>
+                <span style="font-size:13px;color:var(--muted);">{{ object.rdv_apprenant.count }} au total</span>
+            </div>
+            {% for rdv in object.rdv_apprenant.all %}
+            <div class="schedule-row">
+                <div class="schedule-time">
+                    <div class="schedule-time-main">{{ rdv.date|date:"H:i" }}</div>
+                    <div class="schedule-time-sub">{{ rdv.date|date:"d/m/Y" }}</div>
+                </div>
+                <div class="schedule-info">
+                    <div class="schedule-name">
+                        Avec {{ rdv.moniteur.user.get_full_name|default:rdv.moniteur }}
+                    </div>
+                    <div class="schedule-desc">
+                        {% if rdv.status == "OK" %}
+                            <span class="badge badge-green">Confirmé</span>
+                        {% elif rdv.status == "WAIT" %}
+                            <span class="badge badge-gold">En attente</span>
+                        {% elif rdv.status == "DEL" %}
+                            <span class="badge badge-red">Annulé</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <a href="{% url 'rdv-detail' rdv.pk %}" class="btn btn-secondary btn-sm">Détails</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Rendez-vous du moniteur -->
+        {% if object.rdv_moniteur.all %}
+        <div class="table-wrapper">
+            <div class="table-header">
+                <span style="font-size:15px;font-weight:600;">Rendez-vous en tant que moniteur</span>
+                <span style="font-size:13px;color:var(--muted);">{{ object.rdv_moniteur.count }} au total</span>
+            </div>
+            {% for rdv in object.rdv_moniteur.all %}
+            <div class="schedule-row">
+                <div class="schedule-time">
+                    <div class="schedule-time-main">{{ rdv.date|date:"H:i" }}</div>
+                    <div class="schedule-time-sub">{{ rdv.date|date:"d/m/Y" }}</div>
+                </div>
+                <div class="schedule-info">
+                    <div class="schedule-name">
+                        Avec {{ rdv.apprenant.user.get_full_name|default:rdv.apprenant }}
+                    </div>
+                    <div class="schedule-desc">
+                        {% if rdv.status == "OK" %}
+                            <span class="badge badge-green">Confirmé</span>
+                        {% elif rdv.status == "WAIT" %}
+                            <span class="badge badge-gold">En attente</span>
+                        {% elif rdv.status == "DEL" %}
+                            <span class="badge badge-red">Annulé</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <a href="{% url 'rdv-detail' rdv.pk %}" class="btn btn-secondary btn-sm">Détails</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if not object.rdv_apprenant.all and not object.rdv_moniteur.all %}
+        <div class="card" style="text-align:center;padding:40px;color:var(--muted);">
+            <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 12px;display:block;opacity:0.4;">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <p>Aucun rendez-vous associé à ce profil.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar droite -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Heures de formation -->
+        {% if object.heuresformation %}
+        <div class="card" style="border-left:4px solid var(--orange);">
+            <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:12px;">
+                Heures de formation
+            </div>
+            <div style="font-size:42px;font-weight:800;color:var(--navy);line-height:1;">
+                {{ object.heuresformation.solde }}<span style="font-size:18px;font-weight:500;color:var(--muted);">h</span>
+            </div>
+            <p style="font-size:13px;color:var(--muted);margin-top:6px;">heures disponibles</p>
+            <a href="{% url 'heures-detail' object.heuresformation.pk %}" class="btn btn-secondary btn-sm" style="margin-top:14px;">
+                Voir le détail
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="card">
+            <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:14px;">
+                Actions
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                <a href="{% url 'rdv-create' %}" class="btn btn-primary btn-sm" style="justify-content:center;">
+                    Réserver un RDV
+                </a>
+                {% if object.role == "apprenant" %}
+                <a href="{% url 'heures-create' %}" class="btn btn-secondary btn-sm" style="justify-content:center;">
+                    Gérer les heures
+                </a>
+                {% endif %}
+                <a href="{% url 'compte-list' %}" class="btn btn-secondary btn-sm" style="justify-content:center;">
+                    ← Retour à la liste
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

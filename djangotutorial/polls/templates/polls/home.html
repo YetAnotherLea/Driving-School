@@ -83,8 +83,7 @@
     {% if request.user.userprofile.role == "apprenant" %}
     <div class="stat-card" style="background:#FFF0E6;">
         <div class="stat-label" style="color:rgba(26,43,72,0.65);">Mon solde</div>
-        <div class="stat-value" style="color:var(--navy);">{{ request.user.userprofile.heuresformation.solde|default:"0"
-            }}h</div>
+        <div class="stat-value" style="color:var(--navy);">{{ request.user.userprofile.heuresformation.solde|default:"0" }}h</div>
         <div class="stat-sub" style="color:rgba(26,43,72,0.5);">Heures disponibles</div>
     </div>
     {% endif %}

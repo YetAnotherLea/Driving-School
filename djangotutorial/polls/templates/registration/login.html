@@ -41,7 +41,7 @@
             font-size: 20px;
             font-weight: 800;
             color: #fff;
-            margin-bottom: 64px;
+            margin-bottom: 40px;
         }
         .panel-logo img { width: 40px; height: 40px; object-fit: contain; }
         .panel-tagline {
@@ -56,18 +56,59 @@
             color: rgba(255,255,255,0.55);
             line-height: 1.6;
         }
-        .panel-dots {
+        /* Comptes de démonstration */
+        .demo-accounts {
+            margin-top: 56px;
+            position: relative;
+            z-index: 1;
+        }
+        .demo-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #FF6B00;
+            margin-bottom: 8px;
+        }
+        .demo-hint {
+            font-size: 14px;
+            color: rgba(255,255,255,0.55);
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+        .demo-list {
             display: flex;
+            flex-direction: column;
             gap: 8px;
-            margin-top: auto;
-            padding-top: 40px;
         }
-        .dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.25);
+        .demo-account {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            padding: 10px 12px;
+            color: #fff;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
         }
-        .dot.active { background: #FF6B00; width: 24px; border-radius: 4px; }
+        .demo-account:hover,
+        .demo-account:focus-visible {
+            background: rgba(255,107,0,0.18);
+            border-color: rgba(255,107,0,0.55);
+            outline: none;
+        }
+        .demo-role {
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .demo-creds {
+            font-size: 14px;
+            color: rgba(255,255,255,0.55);
+            word-break: break-all;
+        }
 
         /* Right panel */
         .login-form-area {
@@ -198,10 +239,26 @@
         <p class="panel-sub">
             Accédez à votre planning, gérez vos apprenants et suivez les heures de formation en toute simplicité.
         </p>
-        <div class="panel-dots">
-            <div class="dot active"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
+        <div class="demo-accounts">
+            <div class="demo-title">Comptes de démonstration</div>
+            <p class="demo-hint">Cliquez sur un compte pour remplir le formulaire et tester l'interface selon le rôle.</p>
+            <div class="demo-list">
+                <button type="button" class="demo-account"
+                        data-username="Jane_Apprenant" data-password="apprenant123">
+                    <div class="demo-role">Apprenant — Jane Doe</div>
+                    <div class="demo-creds">Jane_Apprenant / apprenant123</div>
+                </button>
+                <button type="button" class="demo-account"
+                        data-username="John_Moniteur" data-password="moniteur123">
+                    <div class="demo-role">Moniteur — John Doe</div>
+                    <div class="demo-creds">John_Moniteur / moniteur123</div>
+                </button>
+                <button type="button" class="demo-account"
+                        data-username="Bob_Secretaire" data-password="secretaire123">
+                    <div class="demo-role">Secrétaire — Bob Smith</div>
+                    <div class="demo-creds">Bob_Secretaire / secretaire123</div>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -230,6 +287,19 @@
             <a href="/" class="back-link">← Retour à l'accueil</a>
         </div>
     </div>
+
+    <script>
+        document.querySelectorAll('.demo-account').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var user = document.querySelector('#id_username');
+                var pass = document.querySelector('#id_password');
+                if (!user || !pass) { return; }
+                user.value = btn.dataset.username;
+                pass.value = btn.dataset.password;
+                pass.focus();
+            });
+        });
+    </script>
 
 </body>
 </html>

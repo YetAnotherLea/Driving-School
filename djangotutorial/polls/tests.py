@@ -250,11 +250,7 @@ class HeuresFormationTest(BaseRolesTest):
 
 
 class SeedDemoTest(TestCase):
-    """La commande qui alimente le site public ne doit ouvrir aucune brèche.
-
-    Les mots de passe de démonstration sont affichés sur la page de connexion :
-    ce qu'ils donnent le droit de faire est donc public par construction.
-    """
+    """Les mots de passe de démo sont publics : leurs droits doivent rester minimes."""
 
     def setUp(self):
         call_command("seed_demo", verbosity=0)
@@ -290,13 +286,12 @@ class SeedDemoTest(TestCase):
         self.assertEqual(User.objects.count(), 7)
 
     def test_le_planning_reste_relatif_a_la_date_du_jour(self):
-        """Des dates figées laisseraient la démo sans rendez-vous à venir."""
         self.assertTrue(RendezVous.objects.filter(date__gte=timezone.now()).exists())
         self.assertTrue(RendezVous.objects.filter(date__lt=timezone.now()).exists())
 
 
 class BackOfficeLectureSeuleTest(TestCase):
-    """L'admin Django est ouvert aux correcteurs, mais en consultation."""
+    """/admin/ est ouvert au compte de démo admin, en consultation seulement."""
 
     def setUp(self):
         call_command("seed_demo", verbosity=0)
@@ -327,13 +322,13 @@ class BackOfficeLectureSeuleTest(TestCase):
         self.client.logout()
         self.client.login(username="Bob_Secretaire", password="secretaire123")
         reponse = self.client.get("/admin/")
-        # Django redirige vers son propre écran de connexion : pas de is_staff.
+        # Sans is_staff, Django renvoie vers son écran de connexion.
         self.assertEqual(reponse.status_code, 302)
         self.assertIn("/admin/login/", reponse["Location"])
 
 
 class RolesGerablesTest(BaseRolesTest):
-    """Seul l'admin crée des comptes secrétaire — la branche la plus fine du modèle."""
+    """Seul l'admin peut créer des comptes secrétaire."""
 
     def test_admin_propose_les_trois_roles(self):
         self.connecte(self.admin)

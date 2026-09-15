@@ -1,15 +1,9 @@
-"""Peuple la base avec les comptes et les rendez-vous de démonstration.
+"""Comptes et rendez-vous de démonstration (ceux affichés sur la page de connexion).
 
-Source unique des données publiques du site vitrine : les identifiants affichés
-sur la page de connexion sortent d'ici. La commande est idempotente — la rejouer
-remet mots de passe, rôles et permissions dans l'état attendu sans créer de
-doublon.
-
-    python manage.py seed_demo            # crée ou remet en état
+    python manage.py seed_demo            # crée ou remet en état, sans doublon
     python manage.py seed_demo --reset    # supprime d'abord les comptes de démo
 
-``--reset`` ne touche qu'aux comptes listés ci-dessous : le superuser et tout
-compte créé à la main survivent, ce qui le distingue d'un ``flush``.
+--reset ne touche pas au superuser ni aux comptes créés à la main.
 """
 
 from django.contrib.auth.models import Permission, User
@@ -20,14 +14,10 @@ from django.utils import timezone
 
 from polls.models import HeuresFormation, RendezVous, UserProfile
 
-# Consultation du back-office Django, accordée au seul compte « admin » : les
-# correcteurs parcourent l'administration sans pouvoir rien modifier. Sans
-# permission sur auth.User, la section « Utilisateurs » ne leur apparaît même pas.
+# Accès /admin/ en consultation seulement, pour le compte admin.
 LECTURE_SEULE = ("view_userprofile", "view_rendezvous", "view_heuresformation")
 
-# Les quatre premiers comptes sont affichés sur la page de connexion ; les deux
-# derniers existent pour que les listes ne soient pas triviales et pour rendre
-# visible le cloisonnement entre deux moniteurs.
+# Les quatre premiers sont affichés sur la page de connexion.
 COMPTES = [
     {
         "username": "Jane_Apprenant",
@@ -83,8 +73,7 @@ COMPTES = [
     },
 ]
 
-# (apprenant, moniteur, jours par rapport à aujourd'hui, heure, statut).
-# Les dates sont relatives : un planning figé serait vide au bout de quelques mois.
+# (apprenant, moniteur, J+n, heure, statut) — relatif à aujourd'hui.
 RENDEZ_VOUS = [
     ("Jane_Apprenant", "John_Moniteur", -5, 11, "OK"),
     ("Alice_Apprenant", "Paul_Moniteur", -2, 9, "OK"),
@@ -96,7 +85,6 @@ RENDEZ_VOUS = [
 
 
 def horaire(jours, heure):
-    """Date à J+`jours`, à l'heure pile, dans le fuseau du site."""
     debut = timezone.localtime(timezone.now()).replace(
         hour=heure, minute=0, second=0, microsecond=0
     )
@@ -131,15 +119,13 @@ class Command(BaseCommand):
         )
 
     def dire(self, message):
-        """N'écrit qu'au-dessus de --verbosity 0, que la suite de tests utilise."""
         if self.bavard:
             self.stdout.write(message)
 
     def supprimer(self):
         noms = [spec["username"] for spec in COMPTES]
         profils = UserProfile.objects.filter(user__username__in=noms)
-        # RendezVous.apprenant et .moniteur sont en on_delete=RESTRICT : les
-        # rendez-vous doivent partir avant les profils qu'ils référencent.
+        # on_delete=RESTRICT : les rendez-vous partent avant les profils.
         RendezVous.objects.filter(
             Q(apprenant__in=profils) | Q(moniteur__in=profils)
         ).delete()
@@ -156,8 +142,7 @@ class Command(BaseCommand):
         user.set_password(spec["password"])
         user.save()
 
-        # La création du User déclenche create_user_profile, qui pose
-        # « apprenant » par défaut : on ajuste le rôle juste après.
+        # Le signal a créé le profil en apprenant, on ajuste le rôle.
         profil, _ = UserProfile.objects.get_or_create(user=user)
         profil.role = spec["role"]
         profil.save()  # sync_heures_formation crée ou retire le solde d'heures
@@ -171,12 +156,6 @@ class Command(BaseCommand):
         return profil
 
     def permissions(self, codenames):
-        """Résout les permissions par codename, en échouant si l'une manque.
-
-        C'est l'intérêt d'une commande plutôt qu'une fixture JSON : un codename
-        obsolète arrête le déploiement au lieu de créer silencieusement un compte
-        sans droits.
-        """
         if not codenames:
             return []
         trouvees = list(
@@ -193,8 +172,7 @@ class Command(BaseCommand):
 
     def planifier(self, profils):
         concernes = list(profils.values())
-        # On repart des mêmes rendez-vous à chaque exécution, pour que le
-        # planning reste relatif à la date du jour.
+        # Recréés à chaque passage pour rester relatifs à la date du jour.
         RendezVous.objects.filter(
             Q(apprenant__in=concernes) | Q(moniteur__in=concernes)
         ).delete()

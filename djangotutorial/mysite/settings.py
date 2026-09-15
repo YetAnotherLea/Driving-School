@@ -10,22 +10,50 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+def _charger_dotenv(chemin):
+    """Charge un .env (CLÉ=valeur) sans écraser les variables déjà définies."""
+    if not chemin.is_file():
+        return
+    for ligne in chemin.read_text(encoding="utf-8").splitlines():
+        ligne = ligne.strip()
+        if not ligne or ligne.startswith("#") or "=" not in ligne:
+            continue
+        cle, valeur = ligne.split("=", 1)
+        os.environ.setdefault(cle.strip(), valeur.strip().strip("'\""))
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-qxo4p%u)y0mvc0*84=mb#mk(9xam2j&-1o9w#9&xkx5hbo%l%-'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+_charger_dotenv(BASE_DIR.parent / ".env")
 
-ALLOWED_HOSTS = []
+
+# Voir .env.example pour les variables attendues.
+
+DEBUG = os.environ.get("DJANGO_DEBUG", "0") == "1"
+
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured(
+            "DJANGO_SECRET_KEY doit être définie hors mode debug."
+        )
+    # dev uniquement
+    SECRET_KEY = "django-insecure-cle-de-developpement-local"
+
+ALLOWED_HOSTS = [
+    hote.strip()
+    for hote in os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+    if hote.strip()
+]
+
+CSRF_TRUSTED_ORIGINS = [f"https://{hote}" for hote in ALLOWED_HOSTS]
 
 
 # Application definition
@@ -76,7 +104,7 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': Path(os.environ.get("DJANGO_DB_PATH", BASE_DIR / 'db.sqlite3')),
     }
 }
 
@@ -115,9 +143,27 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-#LOGIN
+
+# Authentification
+
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/polls/"
 LOGOUT_REDIRECT_URL = "/"
+
+
+# HTTPS
+# https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+
+X_FRAME_OPTIONS = "DENY"
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True

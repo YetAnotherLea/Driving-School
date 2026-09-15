@@ -15,26 +15,11 @@ from polls.forms import (
     RendezVousForm,
 )
 from polls.mixins import ProfileMixin, RoleRequiredMixin
-from polls.models import HeuresFormation, QuizQuestion, RendezVous, UserProfile
+from polls.models import HeuresFormation, RendezVous, UserProfile
 
 TOUS_LES_ROLES = ("apprenant", "moniteur", "secretaire", "admin")
 GESTIONNAIRES = ("secretaire", "admin")
 GESTION_RDV = ("moniteur", "secretaire", "admin")
-
-
-# ── Quiz (accessible sans compte) ──
-
-class QuizView(TemplateView):
-    template_name = "polls/quiz.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Trimitem întrebările amestecate pentru a varia experiența
-        questions = list(QuizQuestion.objects.prefetch_related("choices").all())
-        import random
-        random.shuffle(questions)
-        context["questions"] = questions
-        return context
 
 
 # ── Accueil ──

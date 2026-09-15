@@ -491,42 +491,6 @@
         a.link-orange { color: var(--orange); text-decoration: none; font-weight: 600; }
         a.link-orange:hover { text-decoration: underline; }
 
-        /* ── AI QUIZ BUTTON ── */
-        .btn-ai-quiz {
-            background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
-            color: white !important;
-            border: none;
-            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
-            animation: ai-pulse 2s infinite;
-            position: relative;
-            overflow: hidden;
-        }
-        .btn-ai-quiz::after {
-            content: '';
-            position: absolute;
-            top: -50%; left: -50%;
-            width: 200%; height: 200%;
-            background: rgba(255,255,255,0.2);
-            transform: rotate(45deg);
-            transition: 0.5s;
-            left: -100%;
-        }
-        .btn-ai-quiz:hover::after { left: 100%; }
-        
-        @keyframes ai-pulse {
-            0% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(168, 85, 247, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
-        }
-
-        .nav-link.ai-link {
-            color: #A855F7 !important;
-            font-weight: 700;
-        }
-        .nav-link.ai-link:hover {
-            background: rgba(168, 85, 247, 0.1);
-        }
-
         /* ── Responsive ── */
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
@@ -591,15 +555,6 @@
         </a>
         {% endif %}
         {% endif %}
-
-        <div class="nav-section-label">AI Features</div>
-        <a href="{% url 'quiz' %}" class="nav-link ai-link {% block nav_quiz %}{% endblock %}">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
-            AI Road Test
-            <span class="badge badge-navy" style="margin-left:auto; background: #A855F7; color: white; border-radius: 4px;">NEW</span>
-        </a>
     </nav>
 
     {% if request.user.is_authenticated %}
@@ -638,12 +593,6 @@
     <header class="topbar">
         <span class="topbar-title">{% block page_title %}{% endblock %}</span>
         <div class="topbar-actions">
-            <a href="{% url 'quiz' %}" class="btn btn-ai-quiz btn-sm">
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                </svg>
-                AI Test Result
-            </a>
             {% block topbar_actions %}{% endblock %}
         </div>
     </header>

@@ -12,7 +12,6 @@ from polls.views import (
     HeuresFormationDetailView,
     HeuresFormationListView,
     HeuresFormationUpdateView,
-    QuizView,
     RendezVousCreateView,
     RendezVousDeleteView,
     RendezVousDetailView,
@@ -43,6 +42,4 @@ urlpatterns = [
     path("heures/<int:pk>/", HeuresFormationDetailView.as_view(), name="heures-detail"),
     path("heures/<int:pk>/modifier/", HeuresFormationUpdateView.as_view(), name="heures-update"),
     path("heures/<int:pk>/supprimer/", HeuresFormationDeleteView.as_view(), name="heures-delete"),
-
-    path("quiz/", QuizView.as_view(), name="quiz"),
 ]

@@ -140,33 +140,3 @@ def sync_heures_formation(sender, instance, created, **kwargs):
         HeuresFormation.objects.get_or_create(apprenant=instance, defaults={"solde": 0})
     else:
         HeuresFormation.objects.filter(apprenant=instance).delete()
-
-
-# --- AI QUIZ MODELS ---
-
-class QuizQuestion(models.Model):
-    DIFFICULTY_CHOICES = [
-        ("EASY", "Facile"),
-        ("MEDIUM", "Moyen"),
-        ("HARD", "Difficile"),
-    ]
-    text = models.TextField(verbose_name="Întrebare")
-    image = models.ImageField(upload_to="quiz_images/", null=True, blank=True)
-    explanation = models.TextField(verbose_name="Explicație AI")
-    difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default="MEDIUM")
-    
-    class Meta:
-        verbose_name = "Întrebare Quiz"
-        verbose_name_plural = "Întrebări Quiz"
-
-    def __str__(self):
-        return self.text[:50]
-
-class QuizChoice(models.Model):
-    question = models.ForeignKey(QuizQuestion, related_name="choices", on_delete=models.CASCADE)
-    text = models.CharField(max_length=255)
-    is_correct = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"{self.question.text[:20]} - {self.text}"
-  

@@ -5,6 +5,7 @@ que chaque rôle accède exactement à ce qui lui revient, et rien de plus.
 """
 
 from django.contrib.auth.models import User
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -246,3 +247,102 @@ class HeuresFormationTest(BaseRolesTest):
         sien = HeuresFormation.objects.get(apprenant=autre)
         self.assertEqual(self.client.get(reverse("heures-detail", args=[mien.pk])).status_code, 200)
         self.assertEqual(self.client.get(reverse("heures-detail", args=[sien.pk])).status_code, 404)
+
+
+class SeedDemoTest(TestCase):
+    """La commande qui alimente le site public ne doit ouvrir aucune brèche.
+
+    Les mots de passe de démonstration sont affichés sur la page de connexion :
+    ce qu'ils donnent le droit de faire est donc public par construction.
+    """
+
+    def setUp(self):
+        call_command("seed_demo", verbosity=0)
+
+    def test_aucun_superuser_cree(self):
+        self.assertFalse(User.objects.filter(is_superuser=True).exists())
+
+    def test_seul_le_compte_admin_atteint_le_back_office(self):
+        staff = list(User.objects.filter(is_staff=True).values_list("username", flat=True))
+        self.assertEqual(staff, ["Claire_Admin"])
+
+    def test_le_compte_admin_na_que_des_droits_de_consultation(self):
+        claire = User.objects.get(username="Claire_Admin")
+        codenames = sorted(p.codename for p in claire.user_permissions.all())
+        self.assertEqual(
+            codenames,
+            ["view_heuresformation", "view_rendezvous", "view_userprofile"],
+        )
+
+    def test_les_quatre_roles_sont_representes(self):
+        roles = set(UserProfile.objects.values_list("role", flat=True))
+        self.assertEqual(roles, {"apprenant", "moniteur", "secretaire", "admin"})
+
+    def test_relancer_la_commande_ne_duplique_rien(self):
+        call_command("seed_demo", verbosity=0)
+        self.assertEqual(User.objects.count(), 6)
+        self.assertEqual(RendezVous.objects.count(), 6)
+
+    def test_reset_epargne_les_comptes_hors_demo(self):
+        externe = creer_compte("compte_maison", "admin")
+        call_command("seed_demo", "--reset", verbosity=0)
+        self.assertTrue(User.objects.filter(username="compte_maison").exists())
+        self.assertEqual(User.objects.count(), 7)
+
+    def test_le_planning_reste_relatif_a_la_date_du_jour(self):
+        """Des dates figées laisseraient la démo sans rendez-vous à venir."""
+        self.assertTrue(RendezVous.objects.filter(date__gte=timezone.now()).exists())
+        self.assertTrue(RendezVous.objects.filter(date__lt=timezone.now()).exists())
+
+
+class BackOfficeLectureSeuleTest(TestCase):
+    """L'admin Django est ouvert aux correcteurs, mais en consultation."""
+
+    def setUp(self):
+        call_command("seed_demo", verbosity=0)
+        self.client.login(username="Claire_Admin", password="admin123")
+        self.rdv = RendezVous.objects.first()
+
+    def test_les_modeles_metier_sont_consultables(self):
+        self.assertEqual(self.client.get("/admin/").status_code, 200)
+        self.assertEqual(self.client.get("/admin/polls/rendezvous/").status_code, 200)
+        self.assertEqual(self.client.get("/admin/polls/userprofile/").status_code, 200)
+        self.assertEqual(self.client.get("/admin/polls/heuresformation/").status_code, 200)
+
+    def test_la_gestion_des_utilisateurs_django_reste_hors_de_portee(self):
+        self.assertEqual(self.client.get("/admin/auth/user/").status_code, 403)
+
+    def test_ni_creation_ni_modification_ni_suppression(self):
+        self.assertEqual(self.client.get("/admin/polls/rendezvous/add/").status_code, 403)
+        self.assertEqual(
+            self.client.get(f"/admin/polls/rendezvous/{self.rdv.pk}/delete/").status_code, 403
+        )
+        self.assertEqual(
+            self.client.post(f"/admin/polls/rendezvous/{self.rdv.pk}/delete/", {"post": "yes"}).status_code,
+            403,
+        )
+        self.assertTrue(RendezVous.objects.filter(pk=self.rdv.pk).exists())
+
+    def test_les_autres_comptes_de_demo_natteignent_pas_le_back_office(self):
+        self.client.logout()
+        self.client.login(username="Bob_Secretaire", password="secretaire123")
+        reponse = self.client.get("/admin/")
+        # Django redirige vers son propre écran de connexion : pas de is_staff.
+        self.assertEqual(reponse.status_code, 302)
+        self.assertIn("/admin/login/", reponse["Location"])
+
+
+class RolesGerablesTest(BaseRolesTest):
+    """Seul l'admin crée des comptes secrétaire — la branche la plus fine du modèle."""
+
+    def test_admin_propose_les_trois_roles(self):
+        self.connecte(self.admin)
+        reponse = self.client.get(reverse("compte-create"))
+        choix = [valeur for valeur, _ in reponse.context["form"].fields["role"].choices]
+        self.assertEqual(choix, ["apprenant", "moniteur", "secretaire"])
+
+    def test_secretaire_ne_propose_pas_le_role_secretaire(self):
+        self.connecte(self.secretaire)
+        reponse = self.client.get(reverse("compte-create"))
+        choix = [valeur for valeur, _ in reponse.context["form"].fields["role"].choices]
+        self.assertEqual(choix, ["apprenant", "moniteur"])

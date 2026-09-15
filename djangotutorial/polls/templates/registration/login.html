@@ -109,6 +109,25 @@
             color: rgba(255,255,255,0.55);
             word-break: break-all;
         }
+        .demo-extra {
+            font-size: 12px;
+            color: rgba(255,255,255,0.45);
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+        .demo-note {
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            line-height: 1.5;
+            margin-top: 14px;
+        }
+        .demo-note strong { color: rgba(255,255,255,0.75); }
+        .demo-note code {
+            font-size: 11px;
+            padding: 1px 5px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+        }
 
         /* Right panel */
         .login-form-area {
@@ -258,7 +277,19 @@
                     <div class="demo-role">Secrétaire — Bob Smith</div>
                     <div class="demo-creds">Bob_Secretaire / secretaire123</div>
                 </button>
+                <button type="button" class="demo-account"
+                        data-username="Claire_Admin" data-password="admin123">
+                    <div class="demo-role">Admin — Claire Lefèvre</div>
+                    <div class="demo-creds">Claire_Admin / admin123</div>
+                    <div class="demo-extra">Seul rôle habilité à gérer les comptes secrétaire</div>
+                </button>
             </div>
+            <p class="demo-note">
+                Le compte <strong>Claire_Admin</strong> ouvre également
+                l'administration Django (<code>/admin/</code>) en
+                <strong>lecture seule</strong> : les données y sont consultables,
+                rien n'y est modifiable.
+            </p>
         </div>
     </div>
 

@@ -85,7 +85,7 @@ class HeuresFormation(models.Model):
         verbose_name_plural = "Heures de formations"
 
     def __str__(self):
-        return f"{self.apprenant.user.username} : {self.solde} ore"
+        return f"{self.apprenant.user.username} : {self.solde} heures"
   
 
 class RendezVous(models.Model):
@@ -112,11 +112,16 @@ class Lecon(models.Model):
     def __str__(self):
         return str(self.duree)
 
-# Signals pentru automatizare
+# --- Signaux d'automatisation ---
+
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
+    if kwargs.get("raw"):
+        # Chargement d'une fixture : les profils y figurent déjà, en créer un
+        # ici provoquerait une collision sur la contrainte OneToOne.
+        return
     if created:
-        # Dacă e superuser, îi dăm rol de admin
+        # Un superuser reçoit d'office le rôle admin de l'intranet.
         role = "admin" if instance.is_superuser else "apprenant"
         UserProfile.objects.create(user=instance, role=role)
 
@@ -128,6 +133,9 @@ def sync_heures_formation(sender, instance, created, **kwargs):
     passe de moniteur à apprenant obtient son solde, et l'inverse ne laisse pas
     de HeuresFormation orpheline.
     """
+    if kwargs.get("raw"):
+        # Même raison : pendant un loaddata, la fixture est seule maîtresse.
+        return
     if instance.role == "apprenant":
         HeuresFormation.objects.get_or_create(apprenant=instance, defaults={"solde": 0})
     else:

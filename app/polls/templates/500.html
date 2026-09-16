@@ -1,0 +1,15 @@
+{% extends "polls/base.html" %}
+
+{% block title %}Erreur serveur{% endblock %}
+{% block page_title %}Erreur 500{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:560px;text-align:center;padding:48px 32px;">
+    <div style="font-size:56px;font-weight:800;color:var(--danger);line-height:1;">500</div>
+    <h1 style="font-size:20px;font-weight:700;margin:16px 0 8px;">Une erreur est survenue</h1>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:24px;">
+        Le problème a été enregistré. Réessayez dans quelques instants.
+    </p>
+    <a href="/" class="btn btn-primary" style="justify-content:center;">Retour à l'accueil</a>
+</div>
+{% endblock %}

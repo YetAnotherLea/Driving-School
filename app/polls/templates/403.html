@@ -1,0 +1,17 @@
+{% extends "polls/base.html" %}
+
+{% block title %}Accès refusé{% endblock %}
+{% block page_title %}Erreur 403{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:560px;text-align:center;padding:48px 32px;">
+    <div style="font-size:56px;font-weight:800;color:var(--danger);line-height:1;">403</div>
+    <h1 style="font-size:20px;font-weight:700;margin:16px 0 8px;">Accès refusé</h1>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:24px;">
+        Votre rôle ne vous donne pas accès à cette page.
+    </p>
+    <a href="{% url 'accueil' %}" class="btn btn-primary" style="justify-content:center;">
+        Retour au tableau de bord
+    </a>
+</div>
+{% endblock %}

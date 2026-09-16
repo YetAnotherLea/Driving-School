@@ -5,7 +5,7 @@ from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
 
-#Liste des choix
+# Liste des choix
 ROLES_CHOICES = [
     ("apprenant", "Apprenant"),
     ("moniteur", "Moniteur"),
@@ -20,7 +20,6 @@ LESSON_STATUS = {
 }
 
 
-# Create your models here.   
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=20, choices=ROLES_CHOICES, default="apprenant")

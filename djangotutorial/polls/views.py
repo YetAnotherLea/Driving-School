@@ -15,7 +15,7 @@ from polls.forms import (
     RendezVousForm,
 )
 from polls.mixins import ProfileMixin, RoleRequiredMixin
-from polls.models import HeuresFormation, RendezVous, UserProfile
+from polls.models import HeuresFormation, Lecon, RendezVous, UserProfile
 
 TOUS_LES_ROLES = ("apprenant", "moniteur", "secretaire", "admin")
 GESTIONNAIRES = ("secretaire", "admin")
@@ -182,7 +182,7 @@ class RendezVousListView(RoleRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = RendezVous.objects.select_related(
-            "apprenant__user", "moniteur__user"
+            "apprenant__user", "moniteur__user", "lecon"
         ).order_by("date")
         role = self.profile.role
         if role in GESTIONNAIRES:
@@ -206,31 +206,35 @@ class RendezVousDetailView(RoleRequiredMixin, DetailView):
         return qs.filter(apprenant=self.profile)
 
 
-class RendezVousCreateView(RoleRequiredMixin, CreateView):
-    model = RendezVous
-    form_class = RendezVousForm
-    template_name = "polls/rendezvous_form.html"
-    success_url = reverse_lazy("rdv-list")
-    allowed_roles = GESTION_RDV
+class RendezVousFormMixin:
+    """Enregistre le rendez-vous puis aligne la leçon (et donc le solde) dessus."""
 
     def form_valid(self, form):
         if self.profile.role == "moniteur":
             # Un moniteur ne planifie que pour lui-même.
             form.instance.moniteur = self.profile
-        return super().form_valid(form)
+        if form.instance.pk and "apprenant" in form.changed_data:
+            # Les heures repartent à l'ancien apprenant avant d'être prises au nouveau.
+            Lecon.objects.filter(rdv=form.instance).delete()
+        response = super().form_valid(form)
+        self.object.synchroniser_lecon(form.cleaned_data["duree"])
+        return response
 
 
-class RendezVousUpdateView(RendezVousProprieteMixin, RoleRequiredMixin, UpdateView):
+class RendezVousCreateView(RendezVousFormMixin, RoleRequiredMixin, CreateView):
     model = RendezVous
     form_class = RendezVousForm
     template_name = "polls/rendezvous_form.html"
     success_url = reverse_lazy("rdv-list")
     allowed_roles = GESTION_RDV
 
-    def form_valid(self, form):
-        if self.profile.role == "moniteur":
-            form.instance.moniteur = self.profile
-        return super().form_valid(form)
+
+class RendezVousUpdateView(RendezVousFormMixin, RendezVousProprieteMixin, RoleRequiredMixin, UpdateView):
+    model = RendezVous
+    form_class = RendezVousForm
+    template_name = "polls/rendezvous_form.html"
+    success_url = reverse_lazy("rdv-list")
+    allowed_roles = GESTION_RDV
 
 
 class RendezVousDeleteView(RendezVousProprieteMixin, RoleRequiredMixin, DeleteView):

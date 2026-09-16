@@ -15,7 +15,7 @@ from django.utils import timezone
 from polls.models import HeuresFormation, RendezVous, UserProfile
 
 # Accès /admin/ en consultation seulement, pour le compte admin.
-LECTURE_SEULE = ("view_userprofile", "view_rendezvous", "view_heuresformation")
+LECTURE_SEULE = ("view_userprofile", "view_rendezvous", "view_lecon", "view_heuresformation")
 
 # Les quatre premiers sont affichés sur la page de connexion.
 COMPTES = [
@@ -73,14 +73,14 @@ COMPTES = [
     },
 ]
 
-# (apprenant, moniteur, J+n, heure, statut) — relatif à aujourd'hui.
+# (apprenant, moniteur, J+n, heure, statut, durée) — relatif à aujourd'hui.
 RENDEZ_VOUS = [
-    ("Jane_Apprenant", "John_Moniteur", -5, 11, "OK"),
-    ("Alice_Apprenant", "Paul_Moniteur", -2, 9, "OK"),
-    ("Jane_Apprenant", "John_Moniteur", 1, 10, "OK"),
-    ("Alice_Apprenant", "Paul_Moniteur", 2, 9, "WAIT"),
-    ("Jane_Apprenant", "Paul_Moniteur", 4, 16, "DEL"),
-    ("Alice_Apprenant", "John_Moniteur", 7, 14, "WAIT"),
+    ("Jane_Apprenant", "John_Moniteur", -5, 11, "OK", 2),
+    ("Alice_Apprenant", "Paul_Moniteur", -2, 9, "OK", 1),
+    ("Jane_Apprenant", "John_Moniteur", 1, 10, "OK", 1),
+    ("Alice_Apprenant", "Paul_Moniteur", 2, 9, "WAIT", 2),
+    ("Jane_Apprenant", "Paul_Moniteur", 4, 16, "DEL", 1),
+    ("Alice_Apprenant", "John_Moniteur", 7, 14, "WAIT", 1),
 ]
 
 
@@ -108,6 +108,9 @@ class Command(BaseCommand):
         if options["reset"]:
             self.supprimer()
 
+        # Les rendez-vous partent avant que les soldes soient posés : leurs
+        # leçons rendent des heures en disparaissant.
+        self.deplanifier()
         profils = {spec["username"]: self.compte(spec) for spec in COMPTES}
         self.planifier(profils)
 
@@ -170,16 +173,19 @@ class Command(BaseCommand):
             )
         return trouvees
 
-    def planifier(self, profils):
-        concernes = list(profils.values())
+    def deplanifier(self):
         # Recréés à chaque passage pour rester relatifs à la date du jour.
+        noms = [spec["username"] for spec in COMPTES]
         RendezVous.objects.filter(
-            Q(apprenant__in=concernes) | Q(moniteur__in=concernes)
+            Q(apprenant__user__username__in=noms) | Q(moniteur__user__username__in=noms)
         ).delete()
-        for apprenant, moniteur, jours, heure, statut in RENDEZ_VOUS:
-            RendezVous.objects.create(
+
+    def planifier(self, profils):
+        for apprenant, moniteur, jours, heure, statut, duree in RENDEZ_VOUS:
+            rdv = RendezVous.objects.create(
                 date=horaire(jours, heure),
                 apprenant=profils[apprenant],
                 moniteur=profils[moniteur],
                 status=statut,
             )
+            rdv.synchroniser_lecon(duree)

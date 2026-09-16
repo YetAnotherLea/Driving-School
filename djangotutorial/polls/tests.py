@@ -10,7 +10,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from polls.models import HeuresFormation, RendezVous, UserProfile
+from polls.models import HeuresFormation, Lecon, RendezVous, UserProfile
 
 
 def creer_compte(username, role):
@@ -30,6 +30,7 @@ class BaseRolesTest(TestCase):
         self.secretaire = creer_compte("secretaire", "secretaire")
         self.admin = creer_compte("patron", "admin")
 
+        HeuresFormation.objects.filter(apprenant=self.apprenant).update(solde=10)
         self.rdv = RendezVous.objects.create(
             date=timezone.now() + timezone.timedelta(days=1),
             apprenant=self.apprenant,
@@ -188,6 +189,7 @@ class GestionDesRendezVousTest(BaseRolesTest):
             "apprenant": self.apprenant.pk,
             "moniteur": moniteur.pk,
             "status": "OK",
+            "duree": 1,
         }
 
     def test_secretaire_cree_modifie_supprime(self):
@@ -238,7 +240,7 @@ class HeuresFormationTest(BaseRolesTest):
             reverse("heures-create"), {"apprenant": self.apprenant.pk, "heures": 5}
         )
         self.assertEqual(reponse.status_code, 302)
-        self.assertEqual(HeuresFormation.objects.get(apprenant=self.apprenant).solde, 5)
+        self.assertEqual(HeuresFormation.objects.get(apprenant=self.apprenant).solde, 15)
 
     def test_apprenant_consulte_son_solde_pas_celui_des_autres(self):
         autre = creer_compte("eleve3", "apprenant")
@@ -267,7 +269,7 @@ class SeedDemoTest(TestCase):
         codenames = sorted(p.codename for p in claire.user_permissions.all())
         self.assertEqual(
             codenames,
-            ["view_heuresformation", "view_rendezvous", "view_userprofile"],
+            ["view_heuresformation", "view_lecon", "view_rendezvous", "view_userprofile"],
         )
 
     def test_les_quatre_roles_sont_representes(self):
@@ -341,3 +343,90 @@ class RolesGerablesTest(BaseRolesTest):
         reponse = self.client.get(reverse("compte-create"))
         choix = [valeur for valeur, _ in reponse.context["form"].fields["role"].choices]
         self.assertEqual(choix, ["apprenant", "moniteur"])
+
+
+class LeconTest(BaseRolesTest):
+    """Un rendez-vous confirmé réserve ses heures ; annulé ou supprimé, il les rend."""
+
+    def setUp(self):
+        super().setUp()
+        self.heures = HeuresFormation.objects.get(apprenant=self.apprenant)
+        self.heures.solde = 10
+        self.heures.save()
+        self.connecte(self.secretaire)
+
+    def solde(self):
+        self.heures.refresh_from_db()
+        return self.heures.solde
+
+    def donnees(self, statut, duree, apprenant=None):
+        return {
+            "date": "01/06/2030 10:00",
+            "apprenant": (apprenant or self.apprenant).pk,
+            "moniteur": self.moniteur.pk,
+            "status": statut,
+            "duree": duree,
+        }
+
+    def test_confirmer_reserve_les_heures(self):
+        self.client.post(reverse("rdv-create"), self.donnees("OK", 2))
+        self.assertEqual(self.solde(), 8)
+        self.assertEqual(Lecon.objects.count(), 1)
+
+    def test_en_attente_ne_reserve_rien(self):
+        self.client.post(reverse("rdv-create"), self.donnees("WAIT", 2))
+        self.assertEqual(self.solde(), 10)
+        self.assertFalse(Lecon.objects.exists())
+
+    def test_annuler_rend_les_heures(self):
+        self.client.post(reverse("rdv-create"), self.donnees("OK", 2))
+        rdv = RendezVous.objects.latest("pk")
+        self.client.post(reverse("rdv-update", args=[rdv.pk]), self.donnees("DEL", 2))
+        self.assertEqual(self.solde(), 10)
+        self.assertFalse(Lecon.objects.filter(rdv=rdv).exists())
+
+    def test_changer_la_duree_ajuste_le_solde(self):
+        self.client.post(reverse("rdv-create"), self.donnees("OK", 2))
+        rdv = RendezVous.objects.latest("pk")
+        self.client.post(reverse("rdv-update", args=[rdv.pk]), self.donnees("OK", 3))
+        self.assertEqual(self.solde(), 7)
+
+    def test_supprimer_le_rdv_rend_les_heures(self):
+        self.client.post(reverse("rdv-create"), self.donnees("OK", 2))
+        rdv = RendezVous.objects.latest("pk")
+        self.client.post(reverse("rdv-delete", args=[rdv.pk]))
+        self.assertEqual(self.solde(), 10)
+
+    def test_solde_insuffisant_refuse_la_confirmation(self):
+        reponse = self.client.post(reverse("rdv-create"), self.donnees("OK", 4))
+        self.heures.solde = 3
+        self.heures.save()
+        reponse = self.client.post(reverse("rdv-create"), self.donnees("OK", 4))
+        self.assertEqual(reponse.status_code, 200)
+        self.assertIn("Solde insuffisant", reponse.context["form"].errors["duree"][0])
+        self.assertEqual(self.solde(), 3)
+
+    def test_modifier_sans_changer_la_duree_ne_redebite_pas(self):
+        self.client.post(reverse("rdv-create"), self.donnees("OK", 2))
+        rdv = RendezVous.objects.latest("pk")
+        # Solde à 0 : les 2 h déjà réservées par ce rdv restent utilisables.
+        self.heures.solde = 0
+        self.heures.save()
+        reponse = self.client.post(reverse("rdv-update", args=[rdv.pk]), self.donnees("OK", 2))
+        self.assertEqual(reponse.status_code, 302)
+        self.assertEqual(self.solde(), 0)
+
+    def test_changer_d_apprenant_deplace_la_reservation(self):
+        autre = creer_compte("eleve2", "apprenant")
+        HeuresFormation.objects.filter(apprenant=autre).update(solde=5)
+        self.client.post(reverse("rdv-create"), self.donnees("OK", 2))
+        rdv = RendezVous.objects.latest("pk")
+        self.client.post(reverse("rdv-update", args=[rdv.pk]), self.donnees("OK", 2, apprenant=autre))
+        self.assertEqual(self.solde(), 10)
+        self.assertEqual(HeuresFormation.objects.get(apprenant=autre).solde, 3)
+
+    def test_le_formulaire_reprend_la_duree_existante(self):
+        self.client.post(reverse("rdv-create"), self.donnees("OK", 3))
+        rdv = RendezVous.objects.latest("pk")
+        reponse = self.client.get(reverse("rdv-update", args=[rdv.pk]))
+        self.assertEqual(reponse.context["form"].fields["duree"].initial, 3)

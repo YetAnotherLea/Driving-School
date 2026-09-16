@@ -69,6 +69,7 @@
                 <th>Apprenant</th>
                 <th>Moniteur</th>
                 <th>Statut</th>
+                <th>Durée</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -111,6 +112,9 @@
                     {% else %}
                         <span class="badge badge-gray">{{ rdv.get_status_display }}</span>
                     {% endif %}
+                </td>
+                <td style="color:var(--muted);font-size:13px;">
+                    {% if rdv.lecon %}{{ rdv.lecon.duree }} h{% else %}—{% endif %}
                 </td>
                 <td>
                     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">

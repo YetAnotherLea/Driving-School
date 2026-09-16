@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
+from django.db.models import F
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
 
@@ -101,6 +102,14 @@ class RendezVous(models.Model):
     def __str__(self):
         return str(self.date)
 
+    def synchroniser_lecon(self, duree):
+        """Un rendez-vous confirmé porte une leçon, qui réserve ses heures sur le solde."""
+        if self.status == "OK":
+            Lecon.objects.update_or_create(rdv=self, defaults={"duree": duree})
+        else:
+            Lecon.objects.filter(rdv=self).delete()
+
+
 class Lecon(models.Model):
     rdv = models.OneToOneField(RendezVous, on_delete=models.CASCADE)
     duree = models.IntegerField()
@@ -110,7 +119,12 @@ class Lecon(models.Model):
         verbose_name_plural = "Leçons"
 
     def __str__(self):
-        return str(self.duree)
+        return f"{self.rdv} — {self.duree} h"
+
+    def debiter(self, heures):
+        HeuresFormation.objects.filter(apprenant=self.rdv.apprenant).update(
+            solde=F("solde") - heures
+        )
 
 # --- Signaux d'automatisation ---
 
@@ -136,3 +150,23 @@ def sync_heures_formation(sender, instance, created, **kwargs):
         HeuresFormation.objects.get_or_create(apprenant=instance, defaults={"solde": 0})
     else:
         HeuresFormation.objects.filter(apprenant=instance).delete()
+
+
+# Le solde suit la leçon : débité à la création, ajusté si la durée change,
+# recrédité à la suppression (y compris en cascade du rendez-vous).
+
+@receiver(pre_save, sender=Lecon)
+def memoriser_duree_precedente(sender, instance, **kwargs):
+    instance._duree_avant = (
+        Lecon.objects.filter(pk=instance.pk).values_list("duree", flat=True).first() or 0
+    )
+
+@receiver(post_save, sender=Lecon)
+def reserver_heures(sender, instance, **kwargs):
+    if kwargs.get("raw"):
+        return
+    instance.debiter(instance.duree - instance._duree_avant)
+
+@receiver(post_delete, sender=Lecon)
+def rendre_heures(sender, instance, **kwargs):
+    instance.debiter(-instance.duree)

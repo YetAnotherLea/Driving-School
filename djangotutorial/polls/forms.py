@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 
 from polls.models import (
     HeuresFormation,
+    Lecon,
     RendezVous,
     ROLES_CHOICES,
     UserProfile,
@@ -15,16 +16,45 @@ class RendezVousForm(forms.ModelForm):
         input_formats=["%d/%m/%Y %H:%M", "%d/%m/%Y"],
         help_text="Format : JJ/MM/AAAA HH:MM",
     )
+    duree = forms.IntegerField(
+        min_value=1,
+        max_value=4,
+        initial=1,
+        label="Durée (heures)",
+        help_text="Réservée sur le solde de l'apprenant une fois le rendez-vous confirmé.",
+    )
 
     class Meta:
         model = RendezVous
-        fields = ["date", "apprenant", "moniteur", "status"]
+        fields = ["date", "apprenant", "moniteur", "status", "duree"]
         labels = {"status": "Statut"}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["apprenant"].queryset = UserProfile.objects.filter(role="apprenant")
         self.fields["moniteur"].queryset = UserProfile.objects.filter(role="moniteur")
+        if self.instance.pk:
+            lecon = Lecon.objects.filter(rdv=self.instance).first()
+            if lecon:
+                self.fields["duree"].initial = lecon.duree
+
+    def clean(self):
+        donnees = super().clean()
+        apprenant, duree = donnees.get("apprenant"), donnees.get("duree")
+        if donnees.get("status") != "OK" or not apprenant or not duree:
+            return donnees
+        heures = HeuresFormation.objects.filter(apprenant=apprenant).first()
+        disponible = heures.solde if heures else 0
+        # Les heures déjà réservées par ce même rendez-vous restent utilisables.
+        if self.instance.pk and self.instance.apprenant_id == apprenant.pk:
+            lecon = Lecon.objects.filter(rdv=self.instance).first()
+            disponible += lecon.duree if lecon else 0
+        if duree > disponible:
+            self.add_error(
+                "duree",
+                f"Solde insuffisant : {disponible} heure{'s' if disponible > 1 else ''} disponible{'s' if disponible > 1 else ''}.",
+            )
+        return donnees
 
 
 class HeuresFormationForm(forms.Form):

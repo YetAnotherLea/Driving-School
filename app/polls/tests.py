@@ -311,7 +311,7 @@ class BackOfficeTest(TestCase):
 
 
 class ComptesDemoTest(TestCase):
-    """Les identifiants de démo sont publics : personne ne doit pouvoir les casser."""
+    """Les comptes de démo sont publics : ils doivent rester intacts."""
 
     def setUp(self):
         call_command("seed_demo", verbosity=0)
@@ -433,3 +433,14 @@ class LeconTest(BaseRolesTest):
         rdv = RendezVous.objects.latest("pk")
         reponse = self.client.get(reverse("rdv-update", args=[rdv.pk]))
         self.assertEqual(reponse.context["form"].fields["duree"].initial, 3)
+
+
+class NonIndexationTest(TestCase):
+    def test_robots_txt_interdit_tout(self):
+        reponse = self.client.get("/robots.txt")
+        self.assertEqual(reponse.status_code, 200)
+        self.assertIn("Disallow: /", reponse.content.decode())
+
+    def test_toutes_les_reponses_portent_x_robots_tag(self):
+        for url in ("/", "/login/", "/intranet/", "/admin/login/", "/nexistepas/"):
+            self.assertEqual(self.client.get(url)["X-Robots-Tag"], "noindex, nofollow", url)

@@ -41,8 +41,7 @@ class Command(BaseCommand):
         if options["reset"]:
             self.supprimer()
 
-        # Les rendez-vous partent avant que les soldes soient posés : leurs
-        # leçons rendent des heures en disparaissant.
+        # Rendez-vous d'abord : leurs leçons recréditent les soldes en partant.
         self.deplanifier()
         profils = {spec["username"]: self.compte(spec) for spec in COMPTES}
         self.planifier(profils)

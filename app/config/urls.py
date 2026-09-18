@@ -15,9 +15,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.http import HttpResponse
 from django.urls import path, include
 from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
+
+
+def robots_txt(request):
+    return HttpResponse("User-agent: *\nDisallow: /\n", content_type="text/plain")
 
 
 urlpatterns = [
@@ -26,4 +31,5 @@ urlpatterns = [
     path("", TemplateView.as_view(template_name="landing.html")),
     path("login/", auth_views.LoginView.as_view(), name="login"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path("robots.txt", robots_txt),
 ]

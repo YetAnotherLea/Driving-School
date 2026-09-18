@@ -5,8 +5,12 @@
 {% block nav_heures %}active{% endblock %}
 
 {% block topbar_actions %}
+    {% if profil.peut_gerer_heures %}
     <a href="{% url 'heures-list' %}" class="btn btn-secondary btn-sm">← Retour à la liste</a>
     <a href="{% url 'heures-create' %}" class="btn btn-primary btn-sm">Acheter des heures</a>
+    {% else %}
+    <a href="{% url 'accueil' %}" class="btn btn-secondary btn-sm">← Tableau de bord</a>
+    {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -123,18 +127,28 @@
                 Actions
             </div>
             <div style="display:flex;flex-direction:column;gap:8px;">
+                {% if profil.peut_gerer_heures %}
                 <a href="{% url 'heures-create' %}" class="btn btn-primary btn-sm" style="justify-content:center;">
                     <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                     </svg>
                     Acheter des heures
                 </a>
+                {% endif %}
+                {% if profil.peut_gerer_rdv %}
                 <a href="{% url 'rdv-create' %}" class="btn btn-secondary btn-sm" style="justify-content:center;">
                     Réserver un créneau
                 </a>
+                {% else %}
+                <a href="{% url 'rdv-list' %}" class="btn btn-secondary btn-sm" style="justify-content:center;">
+                    Mon planning
+                </a>
+                {% endif %}
+                {% if profil.peut_gerer_heures %}
                 <a href="{% url 'heures-list' %}" class="btn btn-secondary btn-sm" style="justify-content:center;">
                     ← Retour à la liste
                 </a>
+                {% endif %}
             </div>
         </div>
 

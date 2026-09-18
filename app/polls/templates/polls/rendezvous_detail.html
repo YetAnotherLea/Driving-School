@@ -131,9 +131,11 @@
                 <a href="{% url 'rdv-list' %}" class="btn btn-secondary btn-sm" style="justify-content:center;">
                     ← Retour au planning
                 </a>
+                {% if profil.peut_gerer_rdv %}
                 <a href="{% url 'rdv-create' %}" class="btn btn-primary btn-sm" style="justify-content:center;">
                     Nouveau rendez-vous
                 </a>
+                {% endif %}
             </div>
         </div>
 

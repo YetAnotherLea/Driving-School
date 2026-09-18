@@ -52,6 +52,17 @@ class AccesParRoleTest(BaseRolesTest):
         self.assertEqual(self.client.get(reverse("heures-list")).status_code, 403)
         self.assertEqual(self.client.get(reverse("rdv-create")).status_code, 403)
 
+    def test_chacun_consulte_sa_fiche_et_celles_de_ses_rendez_vous(self):
+        self.connecte(self.apprenant)
+        self.assertEqual(self.client.get(reverse("compte-detail", args=[self.apprenant.pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse("compte-detail", args=[self.moniteur.pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse("compte-detail", args=[self.autre_moniteur.pk])).status_code, 404)
+        self.assertEqual(self.client.get(reverse("compte-detail", args=[self.secretaire.pk])).status_code, 404)
+        self.connecte(self.moniteur)
+        self.assertEqual(self.client.get(reverse("compte-detail", args=[self.moniteur.pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse("compte-detail", args=[self.apprenant.pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse("compte-detail", args=[self.autre_moniteur.pk])).status_code, 404)
+
     def test_moniteur_gere_les_rdv_pas_les_comptes(self):
         self.connecte(self.moniteur)
         self.assertEqual(self.client.get(reverse("rdv-create")).status_code, 200)
@@ -260,17 +271,9 @@ class SeedDemoTest(TestCase):
     def test_aucun_superuser_cree(self):
         self.assertFalse(User.objects.filter(is_superuser=True).exists())
 
-    def test_seul_le_compte_admin_atteint_le_back_office(self):
-        staff = list(User.objects.filter(is_staff=True).values_list("username", flat=True))
-        self.assertEqual(staff, ["Claire_Admin"])
-
-    def test_le_compte_admin_na_que_des_droits_de_consultation(self):
-        claire = User.objects.get(username="Claire_Admin")
-        codenames = sorted(p.codename for p in claire.user_permissions.all())
-        self.assertEqual(
-            codenames,
-            ["view_heuresformation", "view_lecon", "view_rendezvous", "view_userprofile"],
-        )
+    def test_aucun_compte_de_demo_natteint_le_back_office(self):
+        self.assertFalse(User.objects.filter(is_staff=True).exists())
+        self.assertFalse(User.objects.filter(user_permissions__isnull=False).exists())
 
     def test_les_quatre_roles_sont_representes(self):
         roles = set(UserProfile.objects.values_list("role", flat=True))
@@ -281,10 +284,14 @@ class SeedDemoTest(TestCase):
         self.assertEqual(User.objects.count(), 6)
         self.assertEqual(RendezVous.objects.count(), 6)
 
-    def test_reset_epargne_les_comptes_hors_demo(self):
-        externe = creer_compte("compte_maison", "admin")
+    def test_reset_efface_les_creations_des_visiteurs_pas_la_demo(self):
+        User.objects.create_superuser("patron", password="motdepasse123")
+        visiteur = creer_compte("visiteur", "apprenant")
+        jane_avant = User.objects.get(username="Jane_Apprenant").pk
         call_command("seed_demo", "--reset", verbosity=0)
-        self.assertTrue(User.objects.filter(username="compte_maison").exists())
+        self.assertFalse(User.objects.filter(username="visiteur").exists())
+        self.assertTrue(User.objects.filter(username="patron").exists())
+        self.assertEqual(User.objects.get(username="Jane_Apprenant").pk, jane_avant)
         self.assertEqual(User.objects.count(), 7)
 
     def test_le_planning_reste_relatif_a_la_date_du_jour(self):
@@ -292,41 +299,15 @@ class SeedDemoTest(TestCase):
         self.assertTrue(RendezVous.objects.filter(date__lt=timezone.now()).exists())
 
 
-class BackOfficeLectureSeuleTest(TestCase):
-    """/admin/ est ouvert au compte de démo admin, en consultation seulement."""
-
-    def setUp(self):
+class BackOfficeTest(TestCase):
+    def test_les_comptes_de_demo_sont_renvoyes_vers_la_connexion_admin(self):
         call_command("seed_demo", verbosity=0)
-        self.client.login(username="Claire_Admin", password="admin123")
-        self.rdv = RendezVous.objects.first()
-
-    def test_les_modeles_metier_sont_consultables(self):
-        self.assertEqual(self.client.get("/admin/").status_code, 200)
-        self.assertEqual(self.client.get("/admin/polls/rendezvous/").status_code, 200)
-        self.assertEqual(self.client.get("/admin/polls/userprofile/").status_code, 200)
-        self.assertEqual(self.client.get("/admin/polls/heuresformation/").status_code, 200)
-
-    def test_la_gestion_des_utilisateurs_django_reste_hors_de_portee(self):
-        self.assertEqual(self.client.get("/admin/auth/user/").status_code, 403)
-
-    def test_ni_creation_ni_modification_ni_suppression(self):
-        self.assertEqual(self.client.get("/admin/polls/rendezvous/add/").status_code, 403)
-        self.assertEqual(
-            self.client.get(f"/admin/polls/rendezvous/{self.rdv.pk}/delete/").status_code, 403
-        )
-        self.assertEqual(
-            self.client.post(f"/admin/polls/rendezvous/{self.rdv.pk}/delete/", {"post": "yes"}).status_code,
-            403,
-        )
-        self.assertTrue(RendezVous.objects.filter(pk=self.rdv.pk).exists())
-
-    def test_les_autres_comptes_de_demo_natteignent_pas_le_back_office(self):
-        self.client.logout()
-        self.client.login(username="Bob_Secretaire", password="secretaire123")
-        reponse = self.client.get("/admin/")
-        # Sans is_staff, Django renvoie vers son écran de connexion.
-        self.assertEqual(reponse.status_code, 302)
-        self.assertIn("/admin/login/", reponse["Location"])
+        for username, password in (("Claire_Admin", "admin123"), ("Bob_Secretaire", "secretaire123")):
+            self.client.login(username=username, password=password)
+            reponse = self.client.get("/admin/")
+            self.assertEqual(reponse.status_code, 302)
+            self.assertIn("/admin/login/", reponse["Location"])
+            self.client.logout()
 
 
 class RolesGerablesTest(BaseRolesTest):

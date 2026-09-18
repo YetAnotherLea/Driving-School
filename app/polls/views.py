@@ -97,10 +97,25 @@ class CompteDetailView(RoleRequiredMixin, DetailView):
         role = self.profile.role
         if role in GESTIONNAIRES:
             return qs
+        # Chacun voit sa fiche et celles des personnes avec qui il a rendez-vous.
         if role == "moniteur":
-            return qs.filter(role="apprenant", rdv_apprenant__moniteur=self.profile).distinct()
-        # Un apprenant ne consulte que sa propre fiche.
-        return qs.filter(pk=self.profile.pk)
+            lies = Q(role="apprenant", rdv_apprenant__moniteur=self.profile)
+        else:
+            lies = Q(role="moniteur", rdv_moniteur__apprenant=self.profile)
+        return qs.filter(Q(pk=self.profile.pk) | lies).distinct()
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        # Sur une fiche, on ne liste que les rendez-vous que le visiteur a le droit de voir.
+        rdvs = RendezVous.objects.select_related("apprenant__user", "moniteur__user").order_by("date")
+        role = self.profile.role
+        if role == "moniteur":
+            rdvs = rdvs.filter(moniteur=self.profile)
+        elif role == "apprenant":
+            rdvs = rdvs.filter(apprenant=self.profile)
+        ctx["rdv_apprenant"] = rdvs.filter(apprenant=self.object)
+        ctx["rdv_moniteur"] = rdvs.filter(moniteur=self.object)
+        return ctx
 
 
 class CompteCreateView(GestionnaireFormMixin, RoleRequiredMixin, CreateView):

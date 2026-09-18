@@ -1,21 +1,19 @@
 """Comptes et rendez-vous de démonstration (ceux affichés sur la page de connexion).
 
     python manage.py seed_demo            # crée ou remet en état, sans doublon
-    python manage.py seed_demo --reset    # supprime d'abord les comptes de démo
+    python manage.py seed_demo --reset    # supprime aussi tout ce qui n'est pas de la démo
 
---reset ne touche pas au superuser ni aux comptes créés à la main.
+--reset garde les comptes de démo (mêmes identifiants, sessions intactes) et le
+superuser ; les comptes et rendez-vous créés par les visiteurs disparaissent.
 """
 
-from django.contrib.auth.models import Permission, User
-from django.core.management.base import BaseCommand, CommandError
+from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
 from polls.models import HeuresFormation, RendezVous, UserProfile
-
-# Accès /admin/ en consultation seulement, pour le compte admin.
-LECTURE_SEULE = ("view_userprofile", "view_rendezvous", "view_lecon", "view_heuresformation")
 
 # Les quatre premiers sont affichés sur la page de connexion.
 COMPTES = [
@@ -51,8 +49,6 @@ COMPTES = [
         "last_name": "Lefèvre",
         "email": "claire@direction.fr",
         "role": "admin",
-        "is_staff": True,
-        "permissions": LECTURE_SEULE,
     },
     {
         "username": "Alice_Apprenant",
@@ -98,7 +94,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--reset",
             action="store_true",
-            help="Supprime les comptes de démonstration avant de les recréer.",
+            help="Supprime les comptes et rendez-vous créés en dehors de la démo.",
         )
 
     @transaction.atomic
@@ -127,20 +123,17 @@ class Command(BaseCommand):
 
     def supprimer(self):
         noms = [spec["username"] for spec in COMPTES]
-        profils = UserProfile.objects.filter(user__username__in=noms)
         # on_delete=RESTRICT : les rendez-vous partent avant les profils.
-        RendezVous.objects.filter(
-            Q(apprenant__in=profils) | Q(moniteur__in=profils)
-        ).delete()
-        User.objects.filter(username__in=noms).delete()
-        self.dire("Comptes de démonstration précédents supprimés.")
+        RendezVous.objects.all().delete()
+        supprimes, _ = User.objects.exclude(username__in=noms).exclude(is_superuser=True).delete()
+        self.dire(f"{supprimes} objet(s) hors démonstration supprimé(s).")
 
     def compte(self, spec):
         user, _ = User.objects.get_or_create(username=spec["username"])
         user.first_name = spec["first_name"]
         user.last_name = spec["last_name"]
         user.email = spec["email"]
-        user.is_staff = spec.get("is_staff", False)
+        user.is_staff = False
         user.is_superuser = False
         user.set_password(spec["password"])
         user.save()
@@ -150,28 +143,13 @@ class Command(BaseCommand):
         profil.role = spec["role"]
         profil.save()  # sync_heures_formation crée ou retire le solde d'heures
 
-        user.user_permissions.set(self.permissions(spec.get("permissions", ())))
+        user.user_permissions.clear()
 
         if "solde" in spec:
             HeuresFormation.objects.filter(apprenant=profil).update(
                 solde=spec["solde"]
             )
         return profil
-
-    def permissions(self, codenames):
-        if not codenames:
-            return []
-        trouvees = list(
-            Permission.objects.filter(
-                codename__in=codenames, content_type__app_label="polls"
-            )
-        )
-        manquantes = set(codenames) - {perm.codename for perm in trouvees}
-        if manquantes:
-            raise CommandError(
-                "Permissions introuvables : " + ", ".join(sorted(manquantes))
-            )
-        return trouvees
 
     def deplanifier(self):
         # Recréés à chaque passage pour rester relatifs à la date du jour.

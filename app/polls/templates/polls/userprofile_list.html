@@ -77,7 +77,7 @@
                         <a href="{% url 'compte-detail' profile.pk %}" class="link-orange" style="font-size:13px;">
                             Voir le profil →
                         </a>
-                        {% if profile.role in profil.roles_gerables %}
+                        {% if profile.role in profil.roles_gerables and not profile.est_demo %}
                         <a href="{% url 'compte-update' profile.pk %}" class="btn btn-secondary btn-sm">Modifier</a>
                         <a href="{% url 'compte-delete' profile.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
                         {% endif %}

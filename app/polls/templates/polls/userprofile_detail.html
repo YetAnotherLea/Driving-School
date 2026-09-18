@@ -10,7 +10,7 @@
         ← Retour à la liste
     </a>
     {% endif %}
-    {% if object.role in profil.roles_gerables %}
+    {% if object.role in profil.roles_gerables and not object.est_demo %}
     <a href="{% url 'compte-update' object.pk %}" class="btn btn-secondary btn-sm">Modifier</a>
     <a href="{% url 'compte-delete' object.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
     {% endif %}

@@ -310,6 +310,28 @@ class BackOfficeTest(TestCase):
             self.client.logout()
 
 
+class ComptesDemoTest(TestCase):
+    """Les identifiants de démo sont publics : personne ne doit pouvoir les casser."""
+
+    def setUp(self):
+        call_command("seed_demo", verbosity=0)
+        self.client.login(username="Claire_Admin", password="admin123")
+        self.jane = UserProfile.objects.get(user__username="Jane_Apprenant")
+
+    def test_un_compte_de_demo_ne_se_modifie_ni_ne_se_supprime(self):
+        self.assertEqual(self.client.get(reverse("compte-update", args=[self.jane.pk])).status_code, 403)
+        self.assertEqual(self.client.post(reverse("compte-delete", args=[self.jane.pk])).status_code, 403)
+        self.assertTrue(User.objects.filter(username="Jane_Apprenant").exists())
+
+    def test_un_compte_cree_par_un_visiteur_reste_modifiable(self):
+        visiteur = creer_compte("visiteur", "apprenant")
+        self.assertEqual(self.client.get(reverse("compte-update", args=[visiteur.pk])).status_code, 200)
+
+    def test_la_liste_ne_propose_pas_de_modifier_la_demo(self):
+        html = self.client.get(reverse("compte-list")).content.decode()
+        self.assertNotIn(reverse("compte-update", args=[self.jane.pk]), html)
+
+
 class RolesGerablesTest(BaseRolesTest):
     """Seul l'admin peut créer des comptes secrétaire."""
 

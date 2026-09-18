@@ -4,6 +4,8 @@ from django.db.models import F
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
+from polls.demo import IDENTIFIANTS_DEMO
+
 
 # Liste des choix
 ROLES_CHOICES = [
@@ -48,6 +50,11 @@ class UserProfile(models.Model):
     @property
     def is_admin(self):
         return self.role == "admin"
+
+    @property
+    def est_demo(self):
+        """Les comptes de démonstration ne se modifient pas depuis l'intranet."""
+        return self.user.username in IDENTIFIANTS_DEMO
 
     @property
     def peut_gerer_comptes(self):

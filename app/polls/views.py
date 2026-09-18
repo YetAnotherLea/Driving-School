@@ -61,6 +61,8 @@ class CompteAccesMixin:
             raise PermissionDenied(
                 "Vous n'avez pas le droit de gérer un compte de ce rôle."
             )
+        if profil.est_demo:
+            raise PermissionDenied("Les comptes de démonstration ne peuvent pas être modifiés.")
         return profil
 
     def get_object(self, queryset=None):
